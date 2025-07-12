@@ -16,7 +16,7 @@ def get_gold_price():
         soup = BeautifulSoup(response.content, "html.parser")
 
         table = soup.find("table", {"class": "table-price"})
-        target_text = "ฐานภาษีทองรูปพรรณ 96.5%"
+        target_text = "ฐานภาษี"
 
         for row in table.find_all("tr"):
             if target_text in row.get_text():
