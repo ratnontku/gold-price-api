@@ -15,12 +15,12 @@ def get_gold_price():
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.content, "html.parser")
 
-        # Look for the row that contains the specific text
+        # Match only the keyword "ฐานภาษี"
         rows = soup.find_all("tr")
         for row in rows:
-            if "ฐานภาษีทองรูปพรรณ 96.5%" in row.get_text():
+            if "ฐานภาษี" in row.get_text():
                 columns = row.find_all("td")
-                if columns and len(columns) >= 1:
+                if columns:
                     raw_price = columns[-1].get_text().strip().replace(",", "")
                     if raw_price:
                         return jsonify({"goldPrice": float(raw_price)})
