@@ -1,9 +1,3 @@
-from flask import Flask, jsonify
-import requests
-from bs4 import BeautifulSoup
-
-app = Flask(__name__)
-
 @app.route("/gold-price")
 def get_gold_price():
     url = "https://www.goldtraders.or.th/"
@@ -16,7 +10,10 @@ def get_gold_price():
         soup = BeautifulSoup(response.content, "html.parser")
 
         table = soup.find("table", {"class": "table-price"})
-        target_text = "ฐานภาษี"
+        if not table:
+            return jsonify({"error": "Gold price table not found"}), 500
+
+        target_text = "ฐานภาษีทองรูปพรรณ 96.5%"
 
         for row in table.find_all("tr"):
             if target_text in row.get_text():
@@ -26,7 +23,7 @@ def get_gold_price():
                     gold_price = float(raw_price)
                     return jsonify({"goldPrice": gold_price})
 
-        return jsonify({"error": "Gold price not found"}), 404
+        return jsonify({"error": "Gold price row not found"}), 404
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
