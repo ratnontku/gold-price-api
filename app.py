@@ -15,17 +15,19 @@ def get_gold_price():
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.content, "html.parser")
 
-        # Find the correct row: ทองรูปพรรณ 96.5%
+        # Look for the row that contains "ทองรูปพรรณ 96.5%"
         rows = soup.find_all("tr")
         for row in rows:
             if "ทองรูปพรรณ 96.5%" in row.get_text():
                 columns = row.find_all("td")
-                if columns and len(columns) >= 3:
-                    raw_price = columns[-2].get_text().strip().replace(",", "")
-                    if raw_price:
+                if len(columns) >= 5:
+                    raw_price = columns[4].get_text().strip().replace(",", "")
+                    if raw_price.lower() != "n/a" and raw_price:
                         return jsonify({"goldPrice": float(raw_price)})
+                    else:
+                        return jsonify({"error": f"Invalid price: {raw_price}"}), 500
 
-        return jsonify({"error": "Gold base price not found"}), 404
+        return jsonify({"error": "Gold base price row not found"}), 404
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
