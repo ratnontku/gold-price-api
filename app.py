@@ -21,7 +21,7 @@ def get_gold_price():
             if "ทองรูปพรรณ 96.5%" in row.get_text():
                 columns = row.find_all("td")
                 if columns and len(columns) >= 3:
-                    raw_price = columns[-1].get_text().strip().replace(",", "")
+                    raw_price = columns[-2].get_text().strip().replace(",", "")
                     if raw_price:
                         return jsonify({"goldPrice": float(raw_price)})
 
