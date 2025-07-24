@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 import requests
 from bs4 import BeautifulSoup
+import re
 
 app = Flask(__name__)
 
@@ -13,77 +14,103 @@ def get_gold_price():
         }
         response = requests.get(url, headers=headers)
         response.raise_for_status()
-        soup = BeautifulSoup(response.content, "html.parser")
         
-        # First, try to find the main gold price table (Thai domestic prices)
-        # Look for the table that contains both "ทองคำแท่ง" and "ฐานภาษี"
-        main_gold_table = None
-        tables = soup.find_all("table")
+        # Get the HTML content
+        html_content = response.text
+        soup = BeautifulSoup(html_content, "html.parser")
         
-        for table in tables:
-            table_text = table.get_text()
-            if "ทองคำแท่ง" in table_text and "ฐานภาษี" in table_text:
-                main_gold_table = table
+        # Debug: Search for all text containing numbers with commas and decimals
+        # This will help us find where the price 50,316.04 is located
+        price_pattern = re.compile(r'\d{1,3}(?:,\d{3})*\.\d{2}')
+        all_prices = price_pattern.findall(html_content)
+        
+        # Look for the specific price we want (around 50,000)
+        target_price = None
+        for price in all_prices:
+            clean_price = float(price.replace(',', ''))
+            if 50000 <= clean_price <= 60000:  # Range where the base price should be
+                target_price = price
                 break
         
-        if main_gold_table:
-            rows = main_gold_table.find_all("tr")
-            for row in rows:
-                cells = row.find_all("td")
-                if len(cells) >= 3:  # Should have at least 3 columns
-                    # Check if first cell contains "ฐานภาษี"
-                    first_cell_text = cells[0].get_text().strip()
-                    if "ฐานภาษี" in first_cell_text:
-                        # The price should be in the last cell
-                        price_cell = cells[-1]
-                        raw_price = price_cell.get_text().strip()
-                        # Clean the price: remove commas and any other non-numeric characters except decimal point
-                        clean_price = ''.join(c for c in raw_price if c.isdigit() or c == '.')
-                        if clean_price and float(clean_price) > 10000:  # Base price should be > 10,000
-                            return jsonify({
-                                "goldPrice": float(clean_price),
-                                "rawPrice": raw_price,
-                                "currency": "THB"
-                            })
+        if target_price:
+            return jsonify({
+                "goldPrice": float(target_price.replace(',', '')),
+                "rawPrice": target_price,
+                "currency": "THB",
+                "debug": f"Found {len(all_prices)} prices on page"
+            })
         
-        # Alternative approach: look for elements with green styling or specific classes
-        # The green highlighted price might have specific CSS classes
-        green_elements = soup.find_all(attrs={"style": lambda x: x and "color" in x.lower() and "green" in x.lower()})
-        for element in green_elements:
-            text = element.get_text().strip()
-            if "," in text and "." in text:
-                clean_price = ''.join(c for c in text if c.isdigit() or c == '.')
-                if clean_price and float(clean_price) > 10000:
-                    return jsonify({
-                        "goldPrice": float(clean_price),
-                        "rawPrice": text,
-                        "currency": "THB"
-                    })
+        # Alternative: Search in the raw HTML for the pattern around the base price
+        # Look for text patterns that contain both Thai text and the price
+        base_price_patterns = [
+            r'ฐานภาษี[^0-9]*(\d{1,3}(?:,\d{3})*\.\d{2})',
+            r'(\d{1,3}(?:,\d{3})*\.\d{2})[^0-9]*ฐานภาษี',
+            r'50,\d{3}\.\d{2}'  # Specific pattern for prices starting with 50,
+        ]
         
-        # Try to find elements containing numbers around 50,000
-        all_text_elements = soup.find_all(text=True)
-        for text in all_text_elements:
-            text = text.strip()
-            if "50," in text and "." in text:
-                # Check if this is likely the base price by checking surrounding context
-                parent = text.parent if hasattr(text, 'parent') else None
-                if parent:
-                    context = str(parent.parent) if parent.parent else str(parent)
-                    if "ฐานภาษี" in context or "base" in context.lower():
-                        clean_price = ''.join(c for c in text if c.isdigit() or c == '.')
-                        if clean_price:
-                            return jsonify({
-                                "goldPrice": float(clean_price),
-                                "rawPrice": text,
-                                "currency": "THB"
-                            })
+        for pattern in base_price_patterns:
+            matches = re.search(pattern, html_content)
+            if matches:
+                if pattern == r'50,\d{3}\.\d{2}':
+                    price = matches.group(0)
+                else:
+                    price = matches.group(1)
+                return jsonify({
+                    "goldPrice": float(price.replace(',', '')),
+                    "rawPrice": price,
+                    "currency": "THB",
+                    "method": "regex"
+                })
         
-        return jsonify({"error": "Gold base price not found"}), 404
+        # Last resort: return all prices found for debugging
+        return jsonify({
+            "error": "Gold base price not found",
+            "debug": {
+                "all_prices_found": all_prices[:10],  # First 10 prices found
+                "total_prices": len(all_prices),
+                "html_sample": html_content[:1000] if len(html_content) > 1000 else html_content
+            }
+        }), 404
         
     except requests.RequestException as e:
         return jsonify({"error": f"Request failed: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Parsing failed: {str(e)}"}), 500
+
+@app.route("/debug-page")
+def debug_page():
+    """Debug endpoint to see the raw HTML structure"""
+    try:
+        url = "https://www.goldtraders.or.th/"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.content, "html.parser")
+        
+        # Find all elements containing "ฐานภาษี"
+        base_tax_elements = soup.find_all(text=lambda text: text and "ฐานภาษี" in text)
+        
+        debug_info = {
+            "base_tax_elements_found": len(base_tax_elements),
+            "elements_content": []
+        }
+        
+        for i, element in enumerate(base_tax_elements[:5]):  # First 5 elements
+            parent = element.parent if hasattr(element, 'parent') else None
+            if parent:
+                debug_info["elements_content"].append({
+                    "index": i,
+                    "text": element.strip(),
+                    "parent_tag": parent.name,
+                    "parent_text": parent.get_text().strip()[:200],  # First 200 chars
+                    "parent_html": str(parent)[:500]  # First 500 chars of HTML
+                })
+        
+        return jsonify(debug_info)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
