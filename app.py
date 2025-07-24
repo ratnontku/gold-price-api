@@ -36,8 +36,7 @@ def get_gold_price():
             return jsonify({
                 "goldPrice": float(target_price.replace(',', '')),
                 "rawPrice": target_price,
-                "currency": "THB",
-                "debug": f"Found {len(all_prices)} prices on page"
+                "currency": "THB"
             })
         
         # Alternative: Search in the raw HTML for the pattern around the base price
@@ -58,19 +57,10 @@ def get_gold_price():
                 return jsonify({
                     "goldPrice": float(price.replace(',', '')),
                     "rawPrice": price,
-                    "currency": "THB",
-                    "method": "regex"
+                    "currency": "THB"
                 })
         
-        # Last resort: return all prices found for debugging
-        return jsonify({
-            "error": "Gold base price not found",
-            "debug": {
-                "all_prices_found": all_prices[:10],  # First 10 prices found
-                "total_prices": len(all_prices),
-                "html_sample": html_content[:1000] if len(html_content) > 1000 else html_content
-            }
-        }), 404
+        return jsonify({"error": "Gold base price not found"}), 404
         
     except requests.RequestException as e:
         return jsonify({"error": f"Request failed: {str(e)}"}), 500
