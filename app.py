@@ -7,7 +7,7 @@ app = Flask(__name__)
 @app.route("/gold-price")
 def get_gold_price():
     try:
-        url = "https://www.goldtraders.or.th/"
+        url = "https://www.goldtraders.or.th/default.aspx"
         headers = {
             "User-Agent": "Mozilla/5.0"
         }
