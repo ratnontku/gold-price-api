@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 import requests
-from bs4 import BeautifulSoup
+from lxml import html
 
 app = Flask(__name__)
 
@@ -13,17 +13,14 @@ def get_gold_price():
         }
 
         response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.content, "html.parser")
+        tree = html.fromstring(response.content)
 
-        # Match only the keyword "ฐานภาษี"
-        rows = soup.find_all("tr")
-        for row in rows:
-            if "ฐานภาษี" in row.get_text():
-                columns = row.find_all("td")
-                if columns:
-                    raw_price = columns[-1].get_text().strip().replace(",", "")
-                    if raw_price:
-                        return jsonify({"goldPrice": float(raw_price)})
+        xpath = '/html/body/form/div/div/div[2]/div[2]/div[1]/table/tbody/tr/td[1]/div[1]/table/tbody/tr[1]/td[2]/div[1]/div/table/tbody/tr[4]/td[3]/span/b/font'
+        result = tree.xpath(xpath)
+
+        if result and result[0].text:
+            raw_price = result[0].text.strip().replace(",", "")
+            return jsonify({"goldPrice": float(raw_price)})
 
         return jsonify({"error": "Gold base price not found"}), 404
 
