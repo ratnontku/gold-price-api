@@ -22,7 +22,7 @@ def get_gold_price():
             raw_price = result[0].text.strip().replace(",", "")
             return jsonify({"goldPrice": float(raw_price)})
 
-        return jsonify({"error": "Gold base price not found"}), 404
+        return jsonify({"error": "Gold base price not found +++"}), 404
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
