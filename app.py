@@ -14,15 +14,14 @@ def get_gold_price():
 
         response = requests.get(url, headers=headers)
         tree = html.fromstring(response.content)
+         # XPath for date and gold price table rows
+        gold_price_xpath = '//*[@id="DetailPlace_uc_goldprices1_lblOMBuy"]/b/font'
 
-        xpath = '/html/body/form/div/div/div[2]/div[2]/div[1]/table/tbody/tr/td[1]/div[1]/table/tbody/tr[1]/td[2]/div[1]/div/table/tbody/tr[4]/td[3]/span/b/font'
-        result = tree.xpath(xpath)
+        gold_price = tree.xpath(gold_price_xpath)
+        print(buy_x[0].text_content().strip() if buy_x else "No buy price found")
 
-        if result and result[0].text:
-            raw_price = result[0].text.strip().replace(",", "")
-            return jsonify({"goldPrice": float(raw_price)})
-
-        return jsonify({"error": "Gold base price not found +++"}), 404
+        return jsonify({"goldPrice": float(gold_price)})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
