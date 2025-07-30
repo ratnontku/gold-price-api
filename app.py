@@ -23,8 +23,7 @@ def get_gold_price():
         price_text = price_text.replace(',', '')
         gold_price = float(price_text)
 
-
-        return jsonify({"goldPrice": gold_price})
+        return jsonify({"goldPrice": float(gold_price[0].text_content().strip() )})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
