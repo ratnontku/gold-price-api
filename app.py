@@ -17,14 +17,10 @@ def get_gold_price():
          # XPath for date and gold price table rows
         gold_price_xpath = '//*[@id="DetailPlace_uc_goldprices1_lblOMBuy"]/b/font'
 
-        price_element = tree.xpath(gold_price_xpath)
+        gold_price = tree.xpath(gold_price_xpath)
+        print(gold_price[0].text_content().strip() if gold_price else "No buy price found")
 
-        price_text = price_element.text.strip()
-        price_text = price_text.replace(',', '')
-        gold_price = float(price_text)
-
-        return jsonify({"goldPrice": float(gold_price[0].text_content().strip() )})
+        return jsonify({"goldPrice": gold_price[0].text_content().strip()})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
