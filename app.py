@@ -18,11 +18,10 @@ def get_gold_price():
         gold_price_xpath = '//*[@id="DetailPlace_uc_goldprices1_lblOMBuy"]/b/font'
 
         price_element = tree.xpath(gold_price_xpath)
-        # print(gold_price[0].text_content().strip() if gold_price else "No buy price found") #
 
-price_text = price_element[0].text_content().strip()  # Example: '49,982.52'
-price_text = price_text.replace(',', '')  # Remove commas
-gold_price = float(price_text)
+        price_text = price_element.text.strip()
+        price_text = price_text.replace(',', '')
+        gold_price = float(price_text)
 
 
         return jsonify({"goldPrice": gold_price})
