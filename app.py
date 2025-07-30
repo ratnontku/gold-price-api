@@ -20,6 +20,14 @@ def get_gold_price():
         gold_price = tree.xpath(gold_price_xpath)
         print(gold_price[0].text_content().strip() if gold_price else "No buy price found")
 
+# After scraping the price text
+price_text = price_element.text.strip()  # '49,982.52'
+try:
+    gold_price = float(price_text.replace(',', ''))  # Now converts to 49982.52
+except ValueError:
+    return jsonify({"error": f"could not convert string to float: '{price_text}'"})
+
+
         return jsonify({"goldPrice": float(gold_price[0].text_content().strip())})
 
     except Exception as e:
