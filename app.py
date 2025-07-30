@@ -17,15 +17,12 @@ def get_gold_price():
          # XPath for date and gold price table rows
         gold_price_xpath = '//*[@id="DetailPlace_uc_goldprices1_lblOMBuy"]/b/font'
 
-        gold_price = tree.xpath(gold_price_xpath)
+        price_element = tree.xpath(gold_price_xpath)
         print(gold_price[0].text_content().strip() if gold_price else "No buy price found")
 
-# After scraping the price text
-price_text = price_element.text.strip()  # '49,982.52'
-try:
-    gold_price = float(price_text.replace(',', ''))  # Now converts to 49982.52
-except ValueError:
-    return jsonify({"error": f"could not convert string to float: '{price_text}'"})
+price_text = price_element.text.strip()  # Example: '49,982.52'
+price_text = price_text.replace(',', '')  # Remove commas
+gold_price = float(price_text)
 
 
         return jsonify({"goldPrice": float(gold_price[0].text_content().strip())})
