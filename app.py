@@ -1,8 +1,10 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
 import requests
 from lxml import html
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 @app.route("/gold-price")
 def get_gold_price():
