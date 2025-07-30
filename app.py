@@ -20,12 +20,12 @@ def get_gold_price():
         price_element = tree.xpath(gold_price_xpath)
         # print(gold_price[0].text_content().strip() if gold_price else "No buy price found") #
 
-price_text = price_element.text.strip()  # Example: '49,982.52'
+price_text = price_element[0].text_content().strip()  # Example: '49,982.52'
 price_text = price_text.replace(',', '')  # Remove commas
 gold_price = float(price_text)
 
 
-        return jsonify({"goldPrice": float(gold_price[0].text_content().strip())})
+        return jsonify({"goldPrice": gold_price})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
