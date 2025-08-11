@@ -30,7 +30,10 @@ def get_gold_price():
         goldJew_sell_price = tree.xpath(goldJew_sell_price_xpath)
         print(goldJew_sell_price[0].text_content().strip() if goldJew_sell_price else "No gold jew sell price found")
 
-        return jsonify({"goldBarBuyPrice": float(goldBar_buy_price[0].text_content().strip().replace(",", ""))}, {"goldJewBuyPrice": float(goldJew_buy_price[0].text_content().strip().replace(",", ""))}, {"goldJewSellPrice": float(goldJew_sell_price[0].text_content().strip().replace(",", ""))})
-
+        return jsonify({
+            "goldBarBuyPrice": float(goldBar_buy_price[0].text_content().strip().replace(",", "")),
+            "goldJewBuyPrice": float(goldJew_buy_price[0].text_content().strip().replace(",", "")),
+            "goldJewSellPrice": float(goldJew_sell_price[0].text_content().strip().replace(",", ""))
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
