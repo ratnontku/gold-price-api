@@ -17,12 +17,20 @@ def get_gold_price():
         response = requests.get(url, headers=headers)
         tree = html.fromstring(response.content)
          # XPath for date and gold price table rows
-        gold_price_xpath = '//*[@id="DetailPlace_uc_goldprices1_lblOMBuy"]/b/font'
+        goldBar_buy_price_xpath = '//*[@id="DetailPlace_uc_goldprices1_lblOMBuy"]/b/font'
+		goldJew_buy_price_xpath = '//*[@id="DetailPlace_uc_goldprices1_lblBLBuy"]/b/font'
+		goldJew_sell_price_xpath = '//*[@id="DetailPlace_uc_goldprices1_lblBLSell"]/b/font'
 
-        gold_price = tree.xpath(gold_price_xpath)
-        print(gold_price[0].text_content().strip() if gold_price else "No buy price found")
+        goldBar_buy_price = tree.xpath(goldBar_buy_price_xpath)
+        print(goldBar_buy_price[0].text_content().strip() if gold_price else "No gold bar buy price found")
+		
+		goldJew_buy_price = tree.xpath(goldJew_buy_price_xpath)
+        print(goldJew_buy_price[0].text_content().strip() if gold_price else "No gold jew buy price found")
+		
+		goldJew_sell_price = tree.xpath(goldJew_sell_price_xpath)
+        print(goldJew_sell_price[0].text_content().strip() if gold_price else "No gold jew sell price found")
 
-        return jsonify({"goldPrice": float(gold_price[0].text_content().strip().replace(",", ""))})
+        return jsonify({"goldBarBuyPrice": float(goldBar_buy_price[0].text_content().strip().replace(",", ""))}, {"goldJewBuyPrice": float(goldJew_buy_price[0].text_content().strip().replace(",", ""))}, {"goldJewSellPrice": float(goldJew_sell_price[0].text_content().strip().replace(",", ""))})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
